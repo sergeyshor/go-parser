@@ -148,6 +148,7 @@ func GetPagesLinks(parseUrl string) []string {
 	queue := make(chan string, 1)
 
 	var wg sync.WaitGroup
+	var end sync.WaitGroup
 	wg.Add(num - 1)
 	for i := 2; i <= num; i++ {
 		go func(i int) {
@@ -156,14 +157,20 @@ func GetPagesLinks(parseUrl string) []string {
 		}(i)
 	}
 
+	end.Add(1)
 	go func() {
 		for url := range queue {
 			pages = append(pages, url)
 			wg.Done()
 		}
+		end.Done()
 	}()
 
 	wg.Wait()
+
+	close(queue)
+
+	end.Wait()
 
 	return pages
 }
